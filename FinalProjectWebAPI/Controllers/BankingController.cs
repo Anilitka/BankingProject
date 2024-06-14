@@ -3,7 +3,10 @@ using Azure.Core;
 using FinalProjectWebAPI.Dto;
 using FinalProjectWebAPI.Interfaces;
 using FinalProjectWebAPI.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 
 namespace FinalProjectWebAPI.Controllers
@@ -21,7 +24,7 @@ namespace FinalProjectWebAPI.Controllers
             _mapper = mapper;
         }
 
-        [HttpPost("register")]
+        [HttpPost("Register")]
         public IActionResult Register(AccountDto request)
         {
             var account = _mapper.Map<Account>(request);
@@ -36,37 +39,26 @@ namespace FinalProjectWebAPI.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
-        [HttpPost("deposit")]
-        public IActionResult Deposit(string accNumber, decimal amount)
+        [HttpPost("Login")]
+        public IActionResult LogIn([FromBody] LogInRequestDto request)
         {
-            try
-            {
-                _accountRepository.Deposit(accNumber, amount);
-                return Ok("Deposit successful");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
+            var account = _accountRepository.LogIn(request.AccNumber, request.Pass);
+            if (account == null)
+                return Unauthorized("Invalid account number or password");
 
-        [HttpPost("withdraw")]
-        public IActionResult Withdraw(string accNumber, decimal amount)
-        {
-            try
+            var token = _accountRepository.CreateToken(account);
+            var refreshToken = _accountRepository.GenerateRefreshToken();
+            _accountRepository.SetRefreshToken(account, refreshToken);
+
+            return Ok(new
             {
-                _accountRepository.Withdraw(accNumber, amount);
-                return Ok("Withdrawal successful");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+                Token = token,
+                RefreshToken = refreshToken.Token
+            });
         }
 
         [HttpGet("GetAllAccounts")]
-        public ActionResult<IEnumerable<AccountDto>> GetAccounts()
+        public ActionResult<IEnumerable<AccountDto>> GetAllAccounts()
         {
             try
             {
@@ -81,7 +73,36 @@ namespace FinalProjectWebAPI.Controllers
 
         }
 
-        [HttpGet("{id}")]
+        [HttpPost("Deposit")]
+        public IActionResult Deposit(string accNumber, decimal amount)
+        {
+            try
+            {
+                _accountRepository.Deposit(accNumber, amount);
+                return Ok("Deposit successful");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("Withdraw")]
+        public IActionResult Withdraw(string accNumber, decimal amount)
+        {
+            try
+            {
+                _accountRepository.Withdraw(accNumber, amount);
+                return Ok("Withdrawal successful");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+        [HttpGet("GetById{id}")]
         public ActionResult<AccountDto> GetAccount(int id)
         {
             var account = _accountRepository.GetById(id);

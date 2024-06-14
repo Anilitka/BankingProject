@@ -13,6 +13,7 @@ namespace FinalProjectWebAPI.Helper
             CreateMap<AccountDto, Account>();
             CreateMap<Transaction, TransactionDto>();
             CreateMap<TransactionDto, Transaction>();
+            CreateMap<LogInRequestDto, Account>();
         }
     }
 }

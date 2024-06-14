@@ -1,4 +1,5 @@
 using FinalProjectWebAPI.Data;
+using FinalProjectWebAPI.Helper;
 using FinalProjectWebAPI.Interfaces;
 using FinalProjectWebAPI.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -23,7 +24,7 @@ builder.Services.AddDbContext<BankingDbContext>(options =>
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 
-builder.Services.AddAutoMapper(typeof(Program));
+builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 
 var tokenKey = builder.Configuration["AppSettings:Token"];
 Console.WriteLine($"Token Key: {tokenKey}");

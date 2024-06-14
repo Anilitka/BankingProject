@@ -13,6 +13,8 @@ namespace FinalProjectWebAPI.Interfaces
         Account GetById(int id);
         Account GetByAccNumber(string accNumber);
         void SetRefreshToken(Account account, RefreshToken refreshToken);
+        string CreateToken(Account account);
+        RefreshToken GenerateRefreshToken();
         void Deposit(string accNumber, decimal amount);
         void Withdraw(string accNumber, decimal amount);
 

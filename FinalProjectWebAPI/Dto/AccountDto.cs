@@ -10,8 +10,8 @@ namespace FinalProjectWebAPI.Dto
         public string AccName { get; set; }
         public string Email { get; set; }
         public string PhoneNumber { get; set; }
-        public decimal AccBalance { get; set; }
         public string AccNumber { get; set; }
+        public decimal AccBalance { get; set; }
         public AccType AccType { get; set; }
         public string Password { get; set; } 
         public string ConfirmPassword { get; set; }

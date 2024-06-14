@@ -48,15 +48,13 @@ namespace FinalProjectWebAPI.Repository
         public string CreateToken(Account account)
         {
             List<Claim> claims = new List<Claim>
-            {
-               new Claim(ClaimTypes.Name, account.AccNumber),
-               new Claim(ClaimTypes.Role, "User")
-            };
+        {
+            new Claim(ClaimTypes.Name, account.AccNumber),
+            new Claim(ClaimTypes.Role, "User")
+        };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("AppSettings:Token").Value));
-
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
-
             var token = new JwtSecurityToken(
                 claims: claims,
                 expires: DateTime.Now.AddDays(2),
@@ -66,14 +64,16 @@ namespace FinalProjectWebAPI.Repository
 
             return jwt;
         }
+
         public RefreshToken GenerateRefreshToken()
         {
-            return new RefreshToken
+            var refreshToken = new RefreshToken
             {
                 Token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)),
-                Created = DateTime.Now,
-                Expires = DateTime.Now.AddDays(7)
+                Expires = DateTime.UtcNow.AddDays(7),
+                Created = DateTime.UtcNow
             };
+            return refreshToken;
         }
 
         public void SetRefreshToken(Account account, RefreshToken refreshToken)
@@ -81,6 +81,8 @@ namespace FinalProjectWebAPI.Repository
             account.RefreshToken = refreshToken.Token;
             account.TokenCreated = refreshToken.Created;
             account.TokenExpires = refreshToken.Expires;
+
+            _context.SaveChanges();
         }
         private void CreatePasswordHash(string pass, out byte[] passwordHash, out byte[] passwordSalt)
         {
@@ -92,21 +94,22 @@ namespace FinalProjectWebAPI.Repository
         }
         public void Delete(int id)
         {
-            var account = _accounts.FirstOrDefault(a => a.Id == id);
+            var account = _context.Accounts.FirstOrDefault(a => a.Id == id);
             if (account != null)
             {
-                _accounts.Remove(account);
+                _context.Accounts.Remove(account);
             }
         }
 
         public IEnumerable<Account> GetAccounts()
         {
-            return _context.Accounts.ToList();
+            var accountList = _context.Accounts.ToList();
+            return accountList;
         }
 
         public Account GetByAccNumber(string accNumber)
         {
-            return _context.Accounts.FirstOrDefault(a => a.AccNumber == accNumber);
+            return _context.Accounts.FirstOrDefault(a => a.AccNumber == accNumber)!;
         }
 
         public Account GetById(int id)
@@ -116,7 +119,7 @@ namespace FinalProjectWebAPI.Repository
 
         public Account LogIn(string accNumber, string Pass)
         {
-            var account = _accounts.FirstOrDefault(a => a.AccNumber == accNumber);
+            var account = _context.Accounts.FirstOrDefault(a => a.AccNumber == accNumber);
             if (account == null || !VerifyPasswordHash(Pass, account.PasswordHash, account.PasswordSalt))
                 return null;
 
@@ -156,7 +159,8 @@ namespace FinalProjectWebAPI.Repository
                 TransactionTyoe = TransType.Deposit,
                 TransactionStatus = TransStatus.Success
             };
-            _transactions.Add(transaction);
+            _context.Transactions.Add(transaction);
+            _context.SaveChanges();
         }
 
         public void Withdraw(string accNumber, decimal amount)
@@ -164,7 +168,7 @@ namespace FinalProjectWebAPI.Repository
             var account = GetByAccNumber(accNumber);
             if (account == null) throw new ArgumentException("Account not found");
 
-            if (account.AccBalance < amount) throw new InvalidOperationException("Insufficient funds");
+            if (account.AccBalance < amount) throw new InvalidOperationException("Not enough amount");
 
             account.AccBalance -= amount;
             account.LlastUpdated = DateTime.Now;
@@ -178,7 +182,8 @@ namespace FinalProjectWebAPI.Repository
                 TransactionTyoe = TransType.Withdrowal,
                 TransactionStatus = TransStatus.Success
             };
-            _transactions.Add(transaction);
+            _context.Transactions.Add(transaction);
+            _context.SaveChanges();
         }
     }
 }

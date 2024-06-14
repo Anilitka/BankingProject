@@ -17,10 +17,9 @@ namespace FinalProjectWebAPI.Models
         public byte[] PasswordSalt { get; set; }
         public DateTime CreateDate { get; set; }
         public DateTime LlastUpdated { get; set; }
-        public string RefreshToken { get; set; }
+        public string? RefreshToken { get; set; }
         public DateTime TokenCreated { get; set; }
         public DateTime TokenExpires { get; set; }
-        Random rnd = new Random();
 
         public Account()
         {
@@ -35,6 +34,8 @@ namespace FinalProjectWebAPI.Models
             }
             return new string(accountNumber);
         }
+
+        private static readonly Random rnd = new Random();
     }
 
 
